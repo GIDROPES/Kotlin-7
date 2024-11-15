@@ -10,14 +10,22 @@ import java.time.LocalDateTime
  * Известный вам список ошибок
  */
 sealed class ApiException(message: String) : Throwable(message) {
-    data object NotAuthorized : ApiException("Not authorized")
-    data object NetworkException : ApiException("Not connected")
-    data object UnknownException: ApiException("Unknown exception")
+    data object NotAuthorized : ApiException("Not authorized") {
+        private fun readResolve(): Any = NotAuthorized
+    }
+
+    data object NetworkException : ApiException("Not connected") {
+        private fun readResolve(): Any = NetworkException
+    }
+
+    data object UnknownException: ApiException("Unknown exception") {
+        private fun readResolve(): Any = UnknownException
+    }
 }
 
-class ErrorLogger<E : Throwable> {
+class ErrorLogger<in E:Throwable>  {
 
-    val errors = mutableListOf<Pair<LocalDateTime, E>>()
+    private val errors = mutableListOf<Pair<LocalDateTime, E>>()
 
     fun log(response: NetworkResponse<*, E>) {
         if (response is Failure) {
@@ -30,6 +38,10 @@ class ErrorLogger<E : Throwable> {
             println("Error at $date: ${error.message}")
         }
     }
+
+    //fun dump(): List<Pair<LocalDateTime, out E>> = errors.toList()
+
+
 }
 
 fun processThrowables(logger: ErrorLogger<Throwable>) {
